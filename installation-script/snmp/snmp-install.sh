@@ -26,29 +26,26 @@ case "$OS" in
 esac
 
 # ---------- 3. read vars (ENV first, fallback to interactive) ----------
-VER=${SNMP_VERSION:-}          # 2c or 3
-COMM=${SNMP_COMMUNITY:-public}
+VER=${SNMP_VERSION:-}
+COMM=${SNMP_COMMUNITY:-}
 USER=${SNMPv3_USER:-}
 AUTH_PROT=${SNMPv3_AUTH_PROT:-SHA}
 AUTH_PASS=${SNMPv3_AUTH_PASS:-}
 PRIV_PROT=${SNMPv3_PRIV_PROT:-AES}
 PRIV_PASS=${SNMPv3_PRIV_PASS:-}
-# whitelist – space or comma separated
-WHITELIST_RAW=${SNMP_WHITELIST:-127.0.0.1}
+WHITELIST_RAW=${SNMP_WHITELIST:-}
 
-# interactive only when any key var missing
-[[ -z "$VER" ]] && { echo "SNMP version (2c or 3): "; read VER; }
+[[ -z "$VER" ]] && { echo -n "SNMP version (2c or 3): "; read VER; }
 
 if [[ "$VER" == "2c" ]]; then
-    [[ -z "$COMM" ]] && { echo "Community name (default: public): "; read COMM; COMM=${COMM:-public}; }
+    [[ -z "$COMM" ]] && { echo -n "Community name (default: public): "; read COMM; COMM=${COMM:-public}; }
 else
-    [[ -z "$USER" ]] && { echo "SNMPv3 user (-u): "; read USER; }
-    [[ -z "$AUTH_PASS" ]] && { echo "Auth passphrase (-A): "; read -s AUTH_PASS; echo; }
-    [[ -z "$PRIV_PASS" ]] && { echo "Privacy passphrase (-X): "; read -s PRIV_PASS; echo; }
+    [[ -z "$USER" ]] && { echo -n "SNMPv3 user (-u): "; read USER; }
+    [[ -z "$AUTH_PASS" ]] && { echo -n "Auth passphrase (-A): "; read -s AUTH_PASS; echo; }
+    [[ -z "$PRIV_PASS" ]] && { echo -n "Privacy passphrase (-X): "; read -s PRIV_PASS; echo; }
 fi
 
-# >>>  WHITELIST SELALU DITANYAKAN  <<<
-[[ -z "$WHITELIST_RAW" ]] && { echo "Whitelist IPs/networks (space/comma): "; read WHITELIST_RAW; }
+[[ -z "$WHITELIST_RAW" ]] && { echo -n "Whitelist IPs/networks (space/comma): "; read WHITELIST_RAW; }
 
 # normalize whitelist to array
 WHITELIST=${WHITELIST_RAW//,/ }
