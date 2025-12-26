@@ -1,5 +1,6 @@
 #!/bin/bash
 # install-snmp.sh  –  universal SNMP (v2c / v3) installer & configurator
+# Support multiple whitelist IPs / networks
 # Must be executed as root
 
 set -e
@@ -36,11 +37,10 @@ install_pkg(){
     esac
 }
 
-# >>>  FIXED PACKAGE NAMES  <<<
 case "$OS" in
     debian)
-        install_pkg snmpd        # agent daemon
-        install_pkg snmp         # utils (snmpwalk etc.)
+        install_pkg snmpd
+        install_pkg snmp
         ;;
     *)
         install_pkg net-snmp
@@ -68,8 +68,16 @@ else
     read -p "Privacy protocol (-x)  (AES|DES) : " PRIV_PROT
     [[ "$PRIV_PROT" != "AES" && "$PRIV_PROT" != "DES" ]] && PRIV_PROT="AES"
     read -s -p "Privacy passphrase (-X) : " PRIV_PASS; echo
-    read -p "Whitelist IP allowed to query (default: 127.0.0.1) : " WHITE_IP
-    WHITE_IP=${WHITE_IP:-127.0.0.1}
+fi
+
+# >>>  MULTIPLE WHITELIST IP  <<<
+echo "Enter whitelist IPs/networks (space or comma separated) e.g. 192.168.1.10 10.0.0.0/24"
+read -p "Whitelist IPs : " WHITELIST_RAW
+# normalize: ganti koma jadi spasi, lalu split ke array
+WHITELIST=${WHITELIST_RAW//,/ }
+WHITELIST_ARR=($WHITELIST)
+if [[ ${#WHITELIST_ARR[@]} -eq 0 ]]; then
+    WHITELIST_ARR=("127.0.0.1")   # default kalau kosong
 fi
 
 # --------------- 5. Show summary & confirm ----------------------------
@@ -78,11 +86,12 @@ echo " CONFIGURATION SUMMARY"
 echo "=========================================="
 if [[ "$VER" == "2c" ]]; then
     echo "SNMPv2c community = $COMM"
+    echo "whitelist IPs     = ${WHITELIST_ARR[*]}"
 else
     echo "SNMPv3 user       = $USER"
     echo "auth protocol     = $AUTH_PROT"
     echo "privacy protocol  = $PRIV_PROT"
-    echo "whitelist IP      = $WHITE_IP"
+    echo "whitelist IPs     = ${WHITELIST_ARR[*]}"
 fi
 echo "=========================================="
 read -p "Apply this configuration? (y/N) : " CONF
@@ -90,9 +99,8 @@ read -p "Apply this configuration? (y/N) : " CONF
 
 # --------------- 6. Generate config file ------------------------------
 CFG="/etc/snmp/snmpd.conf"
-cp -f $CFG ${CFG}.bak.$(date +%s) 2>/dev/null || true   # safety backup
+cp -f $CFG ${CFG}.bak.$(date +%s) 2>/dev/null || true
 
-# ---------- template + dynamic part ----------------------------------
 cat > $CFG <<'TEMPLATE'
 ###########################################################################
 # snmpd.conf  –  Net-SNMP agent configuration
@@ -101,7 +109,7 @@ cat > $CFG <<'TEMPLATE'
 
 # SECTION: System Information Setup
 sysLocation    South Jakarta
-sysContact     Support-Datacomm <support_dtc@datacomm.co.id>
+sysContact     Support-DTC <support_dtc@datacomm.co.id>
 sysServices    72
 
 # SECTION: Agent Operating Mode
@@ -115,15 +123,7 @@ master  agentx
 view   systemonly  included   .1.3.6.1.2.1.1
 view   systemonly  included   .1.3.6.1.2.1.25.1
 
-# SNMPv2c read-only access  (will be overwritten below if v2c chosen)
-rocommunity  public default -V systemonly
-rocommunity6 public default -V systemonly
-
-# SNMPv3 user section  (will be overwritten below if v3 chosen)
-# createUser authPrivUser SHA-512 myauthphrase AES myprivphrase
-# rouser authPrivUser authpriv -V systemonly
-
-# include all *.conf files in a directory
+# SNMPv2c / v3 will be inserted below
 includeDir /etc/snmp/snmpd.conf.d
 ###########################################################################
 # DYNAMIC PART INSERTED BY SCRIPT – DO NOT EDIT MANUALLY BELOW
@@ -131,18 +131,20 @@ includeDir /etc/snmp/snmpd.conf.d
 
 TEMPLATE
 
-# ---------------- dynamic part (still inside the same file) ----------
 if [[ "$VER" == "2c" ]]; then
-    # remove default v3 lines and insert v2
+    # hapus baris v3 bawaan, insert v2 per-IP
     sed -i '/^# createUser/d; /^# rouser/d' $CFG
-    echo "rocommunity $COMM 127.0.0.1 -V systemonly" >> $CFG
+    for ip in "${WHITELIST_ARR[@]}"; do
+        echo "rocommunity $COMM $ip -V systemonly" >> $CFG
+    done
+    echo "rocommunity6 $COMM ::1/128 -V systemonly" >> $CFG
 else
-    # remove default v2 lines and insert v3
+    # hapus baris v2 bawaan, insert v3 per-IP
     sed -i '/^rocommunity/d; /^rocommunity6/d' $CFG
-    cat >> $CFG <<EOF
-createUser $USER $AUTH_PROT "$AUTH_PASS" $PRIV_PROT "$PRIV_PASS"
-rouser $USER authpriv -V systemonly
-EOF
+    echo "createUser $USER $AUTH_PROT \"$AUTH_PASS\" $PRIV_PROT \"$PRIV_PASS\"" >> $CFG
+    for ip in "${WHITELIST_ARR[@]}"; do
+        echo "rouser $USER authpriv -V systemonly $ip" >> $CFG
+    done
 fi
 
 # --------------- 7. Start / enable service ----------------------------
@@ -154,13 +156,15 @@ echo "SNMP service started/restarted."
 echo "Running snmpwalk test ..."
 {
     echo "==== $(date)  SNMPWALK TEST ===="
+    # coba dari IP pertama dalam daftar
+    TEST_IP=${WHITELIST_ARR[0]}
     if [[ "$VER" == "2c" ]]; then
-        snmpwalk -v2c -c "$COMM" 127.0.0.1 1.3.6.1.2.1.1.1.0
+        snmpwalk -v2c -c "$COMM" "$TEST_IP" 1.3.6.1.2.1.1.1.0
     else
         snmpwalk -v3 -u "$USER" -l authPriv \
                  -a "$AUTH_PROT" -A "$AUTH_PASS" \
                  -x "$PRIV_PROT" -X "$PRIV_PASS" \
-                 "$WHITE_IP" 1.3.6.1.2.1.1.1.0
+                 "$TEST_IP" 1.3.6.1.2.1.1.1.0
     fi
 } >> "$LOG" 2>&1
 
