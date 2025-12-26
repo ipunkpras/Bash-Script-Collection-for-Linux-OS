@@ -37,17 +37,18 @@ PRIV_PASS=${SNMPv3_PRIV_PASS:-}
 WHITELIST_RAW=${SNMP_WHITELIST:-127.0.0.1}
 
 # interactive only when any key var missing
-if [[ -z "$VER" ]]; then
-    echo "SNMP version (2c or 3): "; read VER
-fi
+[[ -z "$VER" ]] && { echo "SNMP version (2c or 3): "; read VER; }
+
 if [[ "$VER" == "2c" ]]; then
-    : "${COMM:=public}"
+    [[ -z "$COMM" ]] && { echo "Community name (default: public): "; read COMM; COMM=${COMM:-public}; }
 else
     [[ -z "$USER" ]] && { echo "SNMPv3 user (-u): "; read USER; }
     [[ -z "$AUTH_PASS" ]] && { echo "Auth passphrase (-A): "; read -s AUTH_PASS; echo; }
     [[ -z "$PRIV_PASS" ]] && { echo "Privacy passphrase (-X): "; read -s PRIV_PASS; echo; }
 fi
-    [[ -z "$WHITELIST_RAW" ]] && { echo "Whitelist IPs/networks (space/comma): "; read WHITELIST_RAW; }
+
+# >>>  WHITELIST SELALU DITANYAKAN  <<<
+[[ -z "$WHITELIST_RAW" ]] && { echo "Whitelist IPs/networks (space/comma): "; read WHITELIST_RAW; }
 
 # normalize whitelist to array
 WHITELIST=${WHITELIST_RAW//,/ }
