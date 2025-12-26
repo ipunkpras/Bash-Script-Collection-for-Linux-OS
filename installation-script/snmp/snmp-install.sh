@@ -46,8 +46,8 @@ else
     [[ -z "$USER" ]] && { echo "SNMPv3 user (-u): "; read USER; }
     [[ -z "$AUTH_PASS" ]] && { echo "Auth passphrase (-A): "; read -s AUTH_PASS; echo; }
     [[ -z "$PRIV_PASS" ]] && { echo "Privacy passphrase (-X): "; read -s PRIV_PASS; echo; }
+    [[ -z "$WHITELIST_RAW" ]] && { echo "Whitelist IPs/networks (space/comma): "; read WHITELIST_RAW; }
 fi
-[[ -z "$WHITELIST_RAW" ]] && { echo "Whitelist IPs/networks (space/comma): "; read WHITELIST_RAW; }
 
 # normalize whitelist to array
 WHITELIST=${WHITELIST_RAW//,/ }
