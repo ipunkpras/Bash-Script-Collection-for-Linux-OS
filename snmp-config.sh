@@ -141,7 +141,7 @@ else
     sed -i '/^rocommunity/d; /^rocommunity6/d' $CFG
     cat >> $CFG <<EOF
 createUser $USER $AUTH_PROT "$AUTH_PASS" $PRIV_PROT "$PRIV_PASS"
-rouser $USER authpriv -V systemonly $WHITE_IP/32
+rouser $USER authpriv -V systemonly
 EOF
 fi
 
