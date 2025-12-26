@@ -24,6 +24,12 @@ chmod +x cleanup-old-kernel.sh
 sudo ./cleanup-old-kernel.sh          # interactive confirmation
 sudo ./cleanup-old-kernel.sh --yes    # skip prompt
 ```
+or you can run this command for running the script without download the file:
+```bash
+chmod +x cleanup-old-kernel.sh
+sudo ./cleanup-old-kernel.sh          # interactive confirmation
+sudo ./cleanup-old-kernel.sh --yes    # skip prompt
+```
 Example console output:
 ```
 1) Currently running kernel: 4.18.0-240.1.1.el8_3.x86_64
