@@ -101,7 +101,7 @@ sudo systemctl stop snmpd
 sudo cp /etc/snmp/snmpd.conf.bak.<ts> /etc/snmp/snmpd.conf
 sudo systemctl start snmpd
 ```
-### 9. Security notes
+## 9. Security notes
 - *Whitelist is enforced* – agent ignores packets from non-listed sources.
 - Passphrases should be Vault-encrypted in Ansible:
   ```yaml
