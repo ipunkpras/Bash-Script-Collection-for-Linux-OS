@@ -1,6 +1,6 @@
 #!/bin/bash
 # cleanup-old-kernel.sh
-# Remove old kernel packages while keeping the currently running version
+# Remove old kernel packages while keeping the currently running version in RHEL OS Family
 
 # --- Ansible-friendly header ---------------------------------
 # If the environment variable ANSIBLE=1 is set, behave like --yes
