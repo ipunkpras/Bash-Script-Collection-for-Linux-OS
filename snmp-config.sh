@@ -90,19 +90,58 @@ read -p "Apply this configuration? (y/N) : " CONF
 
 # --------------- 6. Generate config file ------------------------------
 CFG="/etc/snmp/snmpd.conf"
-cp -f $CFG ${CFG}.bak.$(date +%s) 2>/dev/null || true
-: > $CFG
+cp -f $CFG ${CFG}.bak.$(date +%s) 2>/dev/null || true   # safety backup
 
+# ---------- template + dynamic part ----------------------------------
+cat > $CFG <<'TEMPLATE'
+###########################################################################
+# snmpd.conf  –  Net-SNMP agent configuration
+# See snmpd.conf(5) man page for details
+###########################################################################
+
+# SECTION: System Information Setup
+sysLocation    South Jakarta
+sysContact     Support-Datacomm <support_dtc@datacomm.co.id>
+sysServices    72
+
+# SECTION: Agent Operating Mode
+master  agentx
+# agentaddress  127.0.0.1,[::1]
+
+###########################################################################
+# SECTION: Access Control Setup
+
+# Views  (system + hrSystem groups only)
+view   systemonly  included   .1.3.6.1.2.1.1
+view   systemonly  included   .1.3.6.1.2.1.25.1
+
+# SNMPv2c read-only access  (will be overwritten below if v2c chosen)
+rocommunity  public default -V systemonly
+rocommunity6 public default -V systemonly
+
+# SNMPv3 user section  (will be overwritten below if v3 chosen)
+# createUser authPrivUser SHA-512 myauthphrase AES myprivphrase
+# rouser authPrivUser authpriv -V systemonly
+
+# include all *.conf files in a directory
+includeDir /etc/snmp/snmpd.conf.d
+###########################################################################
+# DYNAMIC PART INSERTED BY SCRIPT – DO NOT EDIT MANUALLY BELOW
+###########################################################################
+
+TEMPLATE
+
+# ---------------- dynamic part (still inside the same file) ----------
 if [[ "$VER" == "2c" ]]; then
-    cat > $CFG <<EOF
-# SNMPv2c
-rocommunity $COMM 127.0.0.1
-EOF
+    # remove default v3 lines and insert v2
+    sed -i '/^# createUser/d; /^# rouser/d' $CFG
+    echo "rocommunity $COMM 127.0.0.1 -V systemonly" >> $CFG
 else
-    cat > $CFG <<EOF
-# SNMPv3
+    # remove default v2 lines and insert v3
+    sed -i '/^rocommunity/d; /^rocommunity6/d' $CFG
+    cat >> $CFG <<EOF
 createUser $USER $AUTH_PROT "$AUTH_PASS" $PRIV_PROT "$PRIV_PASS"
-rouser $USER authPriv $WHITE_IP/32
+rouser $USER authpriv -V systemonly $WHITE_IP/32
 EOF
 fi
 
