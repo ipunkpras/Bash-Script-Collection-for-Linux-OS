@@ -42,7 +42,7 @@ Copy script to files/ or templates/ then:
   failed_when: snmp.rc != 0
   changed_when: "'OK' in snmp.stdout"
 ```
-### snmpv2c config example
+### snmpv2c.yaml config example
 ```yaml
 environment:
     SNMP_VERSION: "2c"
@@ -61,3 +61,25 @@ ansible srv -b -e SNMP_VERSION=2c \
 |------|----------------------------------------------|
 |  0   | Success (service running, snmpwalk passed)   |
 |  1   | Failure (package missing, test failed, etc.) |
+
+## 6. Variables reference
+| Variable   | Description   | Default   |
+|------------|------------|------------|
+| SNMP_VERSION | 2c or 3 | (empty → prompt) |
+| SNMP_COMMUNITY | community string (v2c) | public |
+| SNMPv3_USER | v3 security name | (empty → prompt) |
+| SNMPv3_AUTH_PROT | SHA | MD5 | SHA |
+| SNMPv3_AUTH_PASS | auth passphrase | (empty → prompt) |
+| SNMPv3_PRIV_PROT | AES | DES | AES |
+| SNMPv3_PRIV_PASS | privacy passphrase | (empty → prompt) |
+| SNMP_WHITELIST | IP/prefix list (space/comma) | 127.0.0.1 |
+
+		
+		
+		
+		
+		
+		
+		
+		
+
