@@ -159,12 +159,12 @@ echo "Running snmpwalk test ..."
     # coba dari IP pertama dalam daftar
     TEST_IP=${WHITELIST_ARR[0]}
     if [[ "$VER" == "2c" ]]; then
-        snmpwalk -v2c -c "$COMM" "$TEST_IP" 1.3.6.1.2.1.1.1.0
+        snmpwalk -v2c -c "$COMM" localhost 1.3.6.1.2.1.1.1.0
     else
         snmpwalk -v3 -u "$USER" -l authPriv \
                  -a "$AUTH_PROT" -A "$AUTH_PASS" \
                  -x "$PRIV_PROT" -X "$PRIV_PASS" \
-                 "$TEST_IP" 1.3.6.1.2.1.1.1.0
+                 localhost 1.3.6.1.2.1.1.1.0
     fi
 } >> "$LOG" 2>&1
 
