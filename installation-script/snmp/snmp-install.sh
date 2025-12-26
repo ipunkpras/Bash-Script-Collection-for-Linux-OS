@@ -93,7 +93,7 @@ else
     sed -i '/^rocommunity/d; /^rocommunity6/d' "$CFG"
     echo "createUser $USER $AUTH_PROT \"$AUTH_PASS\" $PRIV_PROT \"$PRIV_PASS\"" >> "$CFG"
     for ip in "${WHITELIST_ARR[@]}"; do
-        echo "rouser $USER authpriv -V systemonly $ip" >> "$CFG"
+        echo "rouser $USER authpriv -V systemonly" >> "$CFG"
     done
 fi
 
