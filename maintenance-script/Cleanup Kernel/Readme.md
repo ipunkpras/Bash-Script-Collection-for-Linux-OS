@@ -26,9 +26,7 @@ sudo ./cleanup-old-kernel.sh --yes    # skip prompt
 ```
 or you can run this command for running the script without download the file:
 ```bash
-chmod +x cleanup-old-kernel.sh
-sudo ./cleanup-old-kernel.sh          # interactive confirmation
-sudo ./cleanup-old-kernel.sh --yes    # skip prompt
+bash -c "$(curl -fsSLk https://raw.githubusercontent.com/ipunkpras/Bash-Script-Collection-for-Linux-OS/refs/heads/main/maintenance-script/Cleanup%20Kernel/Readme.md)"
 ```
 Example console output:
 ```
