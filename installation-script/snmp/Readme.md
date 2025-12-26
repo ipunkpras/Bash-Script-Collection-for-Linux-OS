@@ -74,9 +74,38 @@ ansible srv -b -e SNMP_VERSION=2c \
 | SNMPv3_PRIV_PASS | privacy passphrase | (empty → prompt) |
 | SNMP_WHITELIST | IP/prefix list (space/comma) | 127.0.0.1 |
 
-		
-		
-		
+## 7. Post-install verification
+Manual:
+```bash
+sudo tail /var/log/snmp-test.log
+```
+Ansible:
+```yaml
+- name: Show test log
+  slurp:
+    src: /var/log/snmp-test.log
+  register: log
+- debug:
+    msg: "{{ log.content | b64decode | split('\n') | select | list }}"
+```
+## 8. Uninstall / rollback
+Config backed up to /etc/snmp/snmpd.conf.bak.<timestamp>
+Restore:
+```bash
+sudo systemctl stop snmpd
+sudo cp /etc/snmp/snmpd.conf.bak.<ts> /etc/snmp/snmpd.conf
+sudo systemctl start snmpd
+```
+### 9. Security notes
+- *Whitelist is enforced* – agent ignores packets from non-listed sources.
+- Passphrases should be Vault-encrypted in Ansible:
+  ```yaml
+  SNMPv3_AUTH_PASS: "{{ vault_snmp_auth_pass }}"
+  ```
+- Firewall still needs UDP/161 open for remote queries.
+
+## 10. License
+Public domain – use at your own risk.
 		
 		
 		
