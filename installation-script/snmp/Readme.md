@@ -3,7 +3,7 @@ Ansible-friendly • Multi-IP whitelist • RHEL / CentOS / Ubuntu / SUSE / Arch
 ## 1. Quick facts
 | Item          | Value                       |
 |---------------|-----------------------------|
-| File name     | install-snm.sh              |
+| File name     | install-snmp.sh              |
 | Runtime user  | root (or sudo)              |
 | Ansible support | ✅ 100 % non-interactive    |
 | Exit code     | 0 = success / 1 = failed    |
