@@ -26,7 +26,7 @@ Follow on-screen prompts
 
 ## 4. Ansible usage (fully automated)
 Copy script to files/ or templates/ then:
-
+### snmpv3.yaml configuration example
 ```yaml
 - name: Deploy SNMP agent
   script: install-snmp.sh
@@ -42,4 +42,22 @@ Copy script to files/ or templates/ then:
   failed_when: snmp.rc != 0
   changed_when: "'OK' in snmp.stdout"
 ```
+### snmpv2c config example
+```yaml
+environment:
+    SNMP_VERSION: "2c"
+    SNMP_COMMUNITY: "MySecretCommunity"
+    SNMP_WHITELIST: "192.168.1.0/24, 10.0.0.0/16"
+```
+### Single host (Ansible ad-hoc)
+```bash
+ansible srv -b -e SNMP_VERSION=2c \
+            -e SNMP_COMMUNITY=public \
+            -e SNMP_WHITELIST=127.0.0.1 \
+            -m script -a install-snmp.sh
+```
 
+| Code |                Meaning                       |
+|------|----------------------------------------------|
+|  0   | Success (service running, snmpwalk passed)   |
+|  1   | Failure (package missing, test failed, etc.) |
