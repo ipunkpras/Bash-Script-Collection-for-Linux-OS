@@ -24,6 +24,11 @@ Follow on-screen prompts
 - Enter community / v3 credentials
 - Supply whitelist IPs/networks (space or comma separated) Example: 192.168.1.10 10.0.0.0/24 2001:db8::/64
 
+#### Run Command
+```bash
+bash -c "$(curl -fsSLk https://raw.githubusercontent.com/ipunkpras/Bash-Script-Collection-for-Linux-OS/refs/heads/main/installation-script/snmp/snmp-install.sh)"
+```
+
 ## 4. Ansible usage (fully automated)
 Copy script to files/ or templates/ then:
 ### snmpv3.yaml configuration example
