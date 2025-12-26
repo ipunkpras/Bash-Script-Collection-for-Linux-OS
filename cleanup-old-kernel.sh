@@ -2,6 +2,15 @@
 # cleanup-old-kernel.sh
 # Remove old kernel packages while keeping the currently running version
 
+# --- Ansible-friendly header ---------------------------------
+# If the environment variable ANSIBLE=1 is set, behave like --yes
+[[ "${ANSIBLE}" == "1" ]] && FORCE="--yes" || FORCE="$1"
+# Redirect stdin to null during Ansible runs to avoid blocking
+[[ "${ANSIBLE}" == "1" ]] && exec 0</dev/null
+# Ensure we return 0 only when something was removed
+CHANGE_MADE=0
+# -------------------------------------------------------------
+
 LOG="/var/log/cleanup-kernel.log"
 DATE=$(date '+%F %T')
 RUNNING=$(uname -r)                 # e.g 4.18.0-240.1.1.el8_3.x86_64
@@ -28,7 +37,7 @@ done
 
 if [[ ${#OLD_PKGS[@]} -eq 0 ]]; then
   echo "   No old kernel packages found for removal." | tee -a "$LOG"
-  exit 0
+  exit 2
 fi
 printf "   %s\n" "${OLD_PKGS[@]}" | tee -a "$LOG"
 
@@ -40,8 +49,8 @@ if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
   exit 1
 fi
 
-# Interactive confirmation (skip with --yes)
-if [[ "$1" != "--yes" ]]; then
+# Interactive confirmation (skip with --yes or ANSIBLE=1)
+if [[ "${FORCE}" != "--yes" ]]; then
   read -p "Proceed with the removal listed above? (y/N) " -n 1 -r
   echo
   [[ ! $REPLY =~ ^[Yy]$ ]] && { echo "   Aborted by user." | tee -a "$LOG"; exit 0; }
@@ -52,6 +61,7 @@ echo "4) Removing old packages ..." | tee -a "$LOG"
 yum remove -y "${OLD_PKGS[@]}" 2>&1 | tee -a "$LOG"
 if [[ ${PIPESTATUS[0]} -eq 0 ]]; then
   echo "   Removal completed." | tee -a "$LOG"
+  CHANGE_MADE=1
 else
   echo "   Removal FAILED. Check $LOG" | tee -a "$LOG"
   exit 1
@@ -63,3 +73,6 @@ rpm -qa --queryformat "%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}\n" | \
 grep -E '^kernel' | sort | tee -a "$LOG"
 
 echo "========== $DATE  cleanup-old-kernel finished ==========" >> "$LOG"
+
+# Signal Ansible whether a change happened
+[[ $CHANGE_MADE -eq 1 ]] && exit 0 || exit 2   # 0 = changed, 2 = no old pkg
